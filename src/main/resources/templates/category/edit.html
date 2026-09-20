@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Sửa Danh Mục</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="container mt-4">
+    <div class="col-md-6 offset-md-3">
+        <h2>Cập Nhật Danh Mục</h2>
+        <form th:action="@{/categories/save}" th:object="${category}" method="post" enctype="multipart/form-data">
+            <input type="hidden" th:field="*{id}"/>
+            <input type="hidden" th:field="*{images}"/>
+            
+            <div class="mb-3">
+                <label class="form-label">Tên danh mục:</label>
+                <input type="text" th:field="*{name}" class="form-control" required/>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Hình ảnh hiện tại:</label><br/>
+                <img th:if="*{images}" th:src="@{'/uploads/' + *{images}}" width="100" class="mb-2 img-thumbnail"/>
+                <input type="file" th:field="*{imageFile}" class="form-control" accept="image/*"/>
+            </div>
+            <button type="submit" class="btn btn-primary">Cập Nhật</button>
+            <a th:href="@{/categories}" class="btn btn-secondary">Hủy</a>
+        </form>
+    </div>
+</body>
+</html>

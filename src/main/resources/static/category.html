@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý Category bằng AJAX</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+</head>
+<body class="container mt-4">
+
+    <h2>Danh sách Category (AJAX)</h2>
+    <div class="mb-3">
+        <button class="btn btn-success" onclick="showCreateModal()">
+            <i class="fas fa-plus me-1"></i> Thêm Category
+        </button>
+    </div>
+
+    <table class="table table-bordered table-striped" id="categoryTable">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Tên danh mục</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <!-- MODAL THÊM / SỬA CATEGORY -->
+    <div class="modal fade" id="categoryModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form id="categoryForm" enctype="multipart/form-data">
+              <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Thêm Category</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <input type="hidden" id="categoryId" name="id">
+                <div class="mb-3">
+                    <label class="form-label">Tên Category</label>
+                    <input type="text" class="form-control" id="categoryName" name="name" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Hình ảnh (File)</label>
+                    <input type="file" class="form-control" id="categoryFile" name="file">
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="submit" class="btn btn-primary">Lưu</button>
+              </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="text/javascript">
+        var isEdit = false;
+
+        $(document).ready(function() {
+            loadCategories();
+
+            $("#categoryForm").submit(function(e) {
+                e.preventDefault();
+                
+                var formData = new FormData(this);
+                var apiUrl = isEdit ? '/api/category/updateCategory' : '/api/category/addCategory';
+                
+                // Trường hợp Update bằng PUT qua FormData
+                var methodType = isEdit ? 'PUT' : 'POST';
+
+                $.ajax({
+                    url: apiUrl,
+                    type: methodType,
+                    data: formData,
+                    enctype: 'multipart/form-data',
+                    processData: false,
+                    contentType: false,
+                    cache: false,
+                    success: function(response) {
+                        alert(response.message || "Thao tác thành công!");
+                        var modalEl = document.getElementById('categoryModal');
+                        var modal = bootstrap.Modal.getInstance(modalEl);
+                        if(modal) modal.hide();
+                        loadCategories();
+                    },
+                    error: function(xhr) {
+                        console.error(xhr);
+                        var errorMsg = "Thao tác thất bại!";
+                        if(xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        }
+                        alert(errorMsg);
+                    }
+                });
+            });
+        });
+
+        function loadCategories() {
+            $.getJSON('/api/category', function(res) {
+                var list = res.data;
+                var html = '';
+                if(list && list.length > 0) {
+                    for (var i = 0; i < list.length; i++) {
+                        html += '<tr>';
+                        html += '<td>' + list[i].id + '</td>';
+                        html += '<td>' + list[i].name + '</td>';
+                        html += '<td>';
+                        html += '  <button class="btn btn-warning btn-sm me-2" onclick="showEditModal(' + list[i].id + ', \'' + list[i].name + '\')"><i class="fa fa-edit"></i> Sửa</button>';
+                        html += '  <button class="btn btn-danger btn-sm" onclick="deleteCategory(' + list[i].id + ')"><i class="fa fa-trash"></i> Xóa</button>';
+                        html += '</td>';
+                        html += '</tr>';
+                    }
+                } else {
+                    html = '<tr><td colspan="3" class="text-center">Chưa có dữ liệu</td></tr>';
+                }
+                $('#categoryTable tbody').html(html);
+            });
+        }
+
+        function showCreateModal() {
+            isEdit = false;
+            $('#modalTitle').text('Thêm Category');
+            $('#categoryForm')[0].reset();
+            $('#categoryId').val('');
+            var myModal = new bootstrap.Modal(document.getElementById('categoryModal'));
+            myModal.show();
+        }
+
+        function showEditModal(id, name) {
+            isEdit = true;
+            $('#modalTitle').text('Cập nhật Category');
+            $('#categoryId').val(id);
+            $('#categoryName').val(name);
+            var myModal = new bootstrap.Modal(document.getElementById('categoryModal'));
+            myModal.show();
+        }
+
+        function deleteCategory(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa Category ID: ' + id + '?')) {
+                $.ajax({
+                    url: '/api/category/deleteCategory?id=' + id,
+                    type: 'DELETE',
+                    success: function(response) {
+                        alert(response.message || "Đã xóa!");
+                        loadCategories();
+                    },
+                    error: function() {
+                        alert("Xóa thất bại!");
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
